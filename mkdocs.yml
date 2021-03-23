@@ -34,6 +34,8 @@ nav:
           - 'Routines': dbms/mysql/8.0/mysql_routines.md
           - 'InnoDB': dbms/mysql/8.0/mysql_innodb.md
           - 'Explain': dbms/mysql/8.0/mysql_explain.md
+      - 'File & Memory':
+          - 'Dynamic storage allocation': dbms/file/dynamic_storage_allocation.md
       - 'Text and Graph':
           - 'WordNet': dbms/graph/wordnet.md
           - 'Lemon':  dbms/graph/lemon.md
