@@ -64,6 +64,8 @@ $$
 [^1]: https://squidfunk.github.io/mkdocs-material/extensions/footnotes/
 
 
+### Mermaid
+
 [引入mermaid diagrams](https://github.com/squidfunk/mkdocs-material/issues/693):
 
 ```
@@ -84,4 +86,24 @@ graph TD;
     A-->C;
     B-->D;
     C-->D;
+```
+
+### Graphviz
+
+https://github.com/sprin/markdown-inline-graphviz/issues/7
+
+```
+pip install markdown-inline-graphviz-extension
+
+
+<div>
+{% dot attack_plan.svg
+    digraph G {
+        rankdir=LR
+        Earth [peripheries=2]
+        Mars
+        Earth -> Mars
+    }
+%}
+</div>
 ```
