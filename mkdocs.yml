@@ -49,6 +49,7 @@ nav:
           - 'Apache TinkerPop': dbms/graph/tinkerpop.md
           - 'ElasticSearch': dbms/graph/elasticsearch.md
           - 'Benchmark': dbms/graph/graph-benchmark.md
+      - 'ClickHouse': dbms/clickhouse.md
     - Editor:
       - Eclipse: editor/eclipse.md
       - 'IntelliJ IDEA': editor/idea.md
