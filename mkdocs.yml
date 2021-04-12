@@ -12,7 +12,6 @@ nav:
       - 'JVM Tool Interface': java/jvmti_demo.md
       - 'HotSpot Concepts': java/openjdk_hotspot_concepts.md
       - 'HotSpot RTFSC': java/openjdk_hotspot_rtfsc.md
-      - 'Concurrency': java/concurrency.md
       - 'GC': java/gc.md
       - 'Spring': java/spring.md
     - 'DBMS':
