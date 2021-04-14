@@ -49,6 +49,7 @@ nav:
           - 'ElasticSearch': dbms/graph/elasticsearch.md
           - 'Benchmark': dbms/graph/graph-benchmark.md
       - 'ClickHouse': dbms/clickhouse.md
+      - 'Presto': dbms/presto.md
     - Editor:
       - Eclipse: editor/eclipse.md
       - 'IntelliJ IDEA': editor/idea.md
