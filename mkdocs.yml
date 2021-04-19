@@ -14,6 +14,7 @@ nav:
       - 'HotSpot RTFSC': java/openjdk_hotspot_rtfsc.md
       - 'GC': java/gc.md
       - 'Spring': java/spring.md
+      - 'Guice': java/guice.md
     - 'DBMS':
       - 'Refernces of Database Internals': dbms/ref-of-db-internals.md
       - Parser:
