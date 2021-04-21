@@ -15,6 +15,8 @@ nav:
       - 'GC': java/gc.md
       - 'Spring': java/spring.md
       - 'Guice': java/guice.md
+      - 'Java SE': java/javase.md
+      - 'Java EE': java/javaee.md
     - 'DBMS':
       - 'Refernces of Database Internals': dbms/ref-of-db-internals.md
       - Parser:
