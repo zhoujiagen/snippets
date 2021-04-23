@@ -48,7 +48,7 @@ Query Execution Model:
 |<div style="width:200px">Module</div>|Description|
 |:---|:---|
 |presto-atop||
-|presto-spi|`com.facebook.presto.spi.connector.Connector`|
+|presto-spi|`spi.connector.Connector`|
 |presto-array||
 |presto-cache||
 |presto-jmx||
@@ -83,20 +83,20 @@ Query Execution Model:
 |presto-mongodb||
 |presto-bytecode||
 |presto-client|The Presto client allows users to submit Presto queries and view results. <br/>`POST /v1/statement`, `GET nextUri`, `DELETE nextUri`.|
-|presto-parser|AST: `com.facebook.presto.sql.tree.Node`<br/>Parser: `com.facebook.presto.sql.parser.SqlParser`|
-|presto-main|`com.facebook.presto.server.PrestoServer`<br/>`com.facebook.presto.server.ServerMainModule`<br/>`com.facebook.presto.server.CoordinatorModule`<br/>`com.facebook.presto.server.WorkerModule`|
+|presto-parser|AST: `sql.tree.Node`<br/>Parser: `sql.parser.SqlParser`|
+|presto-main|`server.PrestoServer`<br/>`server.ServerMainModule`<br/>`server.CoordinatorModule`<br/>`server.WorkerModule`|
 |presto-ml||
 |presto-geospatial||
 |presto-geospatial-toolkit||
 |presto-benchmark||
 |presto-tests||
 |presto-product-tests||
-|presto-jdbc|Presto JDBC Driver: `com.facebook.presto.jdbc.PrestoDriver`|
+|presto-jdbc|Presto JDBC Driver: `jdbc.PrestoDriver`|
 |presto-pinot||
 |presto-pinot-toolkit||
-|presto-cli|The Presto CLI provides a terminal-based interactive shell for running queries.<br/>`<main-class>com.facebook.presto.cli.Presto</main-class>`|
+|presto-cli|The Presto CLI provides a terminal-based interactive shell for running queries.<br/>`<main-class>cli.Presto</main-class>`|
 |presto-benchmark-driver||
-|presto-server|使用Apache Maven Assembly聚合输出归档: launcher, plugin. `<main-class>com.facebook.presto.server.PrestoServer</main-class>`|
+|presto-server|使用Apache Maven Assembly聚合输出归档: launcher, plugin. `<main-class>server.PrestoServer</main-class>`|
 |presto-server-rpm||
 |presto-docs||
 |presto-verifier||
@@ -111,7 +111,7 @@ Query Execution Model:
 |presto-thrift-connector||
 |presto-matching||
 |presto-memory-context||
-|presto-proxy|Proxy service for Presto: This proxy server allows clients to securely access a remote Presto server (or set of servers) without having direct access to the server. <br/>`<main-class>com.facebook.presto.proxy.PrestoProxy</main-class>`|
+|presto-proxy|Proxy service for Presto: This proxy server allows clients to securely access a remote Presto server (or set of servers) without having direct access to the server. <br/>`<main-class>proxy.PrestoProxy</main-class>`|
 |presto-kudu||
 |presto-elasticsearch||
 |presto-function-namespace-managers||
@@ -136,56 +136,347 @@ Query Execution Model:
 
 #### `server.PrestoServer`
 
-|Name|Source|Description|
-|:---|:---|:---|
-|airlift.node.NodeModule|airlift||
-|airlift.discovery.client.DiscoveryModule|airlift||
-|airlift.http.server.HttpServerModule|airlift||
-|airlift.json.JsonModule|airlift||
-|server.smile.SmileModule|presto||
-|airlift.jaxrs.JaxrsModule|airlift||
-|org.weakref.jmx.guice.MBeanModule|weakref||
-|airlift.jmx.JmxModule|airlift||
-|airlift.jmx.JmxHttpModule|airlift||
-|airlift.log.LogJmxModule|airlift||
-|airlift.tracetoken.TraceTokenModule|airlift||
-|airlift.event.client.JsonEventModule|airlift||
-|airlift.event.client.HttpEventModule|airlift||
-|server.security.ServerSecurityModule|presto||
-|security.AccessControlModule|presto||
-|eventlistener.EventListenerModule|presto||
-|server.ServerMainModule|presto|服务器主模块: `server.ResourceManagerModule`, `server.CoordinatorModule`, `server.WorkerModule`.|
-|server.GracefulShutdownModule|presto||
-|execution.warnings.WarningCollectorModule|presto||
-|storage.TempStorageModule|presto||
+|Name|Type|Source|Description|
+|:---|:---|:---|:---|
+|airlift.node.NodeModule|module|airlift||
+|airlift.discovery.client.DiscoveryModule|module|airlift||
+|airlift.http.server.HttpServerModule|module|airlift||
+|airlift.json.JsonModule|module|airlift||
+|server.smile.SmileModule|module|presto||
+|airlift.jaxrs.JaxrsModule|module|airlift||
+|org.weakref.jmx.guice.MBeanModule|module|weakref||
+|airlift.jmx.JmxModule|module|airlift||
+|airlift.jmx.JmxHttpModule|module|airlift||
+|airlift.log.LogJmxModule|module|airlift||
+|airlift.tracetoken.TraceTokenModule|module|airlift||
+|airlift.event.client.JsonEventModule|module|airlift||
+|airlift.event.client.HttpEventModule|module|airlift||
+|server.security.ServerSecurityModule|module|presto||
+|security.AccessControlModule|module|presto||
+|eventlistener.EventListenerModule|module|presto||
+|server.ServerMainModule|module|presto|服务器主模块: `server.ResourceManagerModule`, `server.CoordinatorModule`, `server.WorkerModule`.|
+|server.GracefulShutdownModule|module|presto||
+|execution.warnings.WarningCollectorModule|module|presto||
+|storage.TempStorageModule|module|presto||
 
-### `server.ServerMainModule`
+#### `server.ServerMainModule`
 
-|Name|Source|Description|
-|:---|:---|:---|
-|com.facebook.presto.server.InternalCommunicationModule|||
-|com.facebook.presto.sql.planner.sanity.PlanChecker|||
-|com.facebook.presto.sql.parser.SqlParser|||
-|com.facebook.airlift.stats.GcMonitor|||
-|com.facebook.presto.metadata.SessionPropertyManager|||
-|com.facebook.presto.metadata.SchemaPropertyManager|||
-|com.facebook.presto.metadata.TablePropertyManager|||
-|com.facebook.presto.metadata.ColumnPropertyManager|||
-|com.facebook.presto.metadata.AnalyzePropertyManager|||
-|com.facebook.presto.metadata.DiscoveryNodeManager|||
-|com.facebook.presto.metadata.InternalNodeManager|||
-|com.facebook.presto.metadata.ForNodeManager|||
-|com.facebook.presto.execution.scheduler.NodeScheduler|||
-|com.facebook.presto.execution.scheduler.NetworkTopology|||
-|com.facebook.presto.server.TaskResource|||
-|com.facebook.presto.server.TaskExecutorResource|||
-|com.facebook.presto.execution.TaskManagementExecutor|||
-|com.facebook.presto.execution.SqlTaskManager|||
-|com.facebook.drift.codec.utils.DefaultThriftCodecsModule|||
+|Name|Type|Source|Description|
+|:---|:---|:---|:---|
+|InternalCommunicationModule||||
+|PlanChecker||||
+|SqlParser||||
+|ThrowableMapper||||
+|ExplainAnalyzeContext||||
+|==GC Monitor==|
+|JmxGcMonitor||||
+|==session properties==|
+|SessionPropertyManager||||
+|==schema properties==|
+|SchemaPropertyManager||||
+|==table properties==|
+|TablePropertyManager||||
+|==column properties==|
+|ColumnPropertyManager||||
+|==analyze properties==|
+|AnalyzePropertyManager||||
+|==node manager==|
+|discovery selector "presto"||||
+|DiscoveryNodeManager||||
+|http client "node-manager"||||
+|drift client ThriftServerInfoClient||||
+|address selector FixedAddressSelector||||
+|==node scheduler==|
+|NodeScheduler||||
+|NodeSelectionStats||||
+|NodeSelectionStats||||
+|NodeSchedulerExporter||||
+|NodeTaskMap||||
+|==network topology==|
+|LegacyNetworkTopology||||
+|FlatNetworkTopology||||
+|==task execution==|
+|TaskResource||||
+|TaskExecutorResource||||
+|TaskManagementExecutor||||
+|SqlTaskManager||||
+|DefaultThriftCodecsModule||||
+|==memory revoking scheduler==|
+|TaskThresholdMemoryRevokingScheduler||||
+|MemoryRevokingScheduler||||
+|==Add monitoring for JVM pauses==|
+|PauseMeter||||
+|GcStatusMonitor||||
+|LocalMemoryManager||||
+|LocalMemoryManagerExporter||||
+|EmbedVersion||||
+|TaskExecutor||||
+|MultilevelSplitQueue||||
+|LocalExecutionPlanner||||
+|FragmentCacheStats||||
+|ExpressionCompiler||||
+|PageFunctionCompiler||||
+|IndexJoinLookupStats||||
+|AsyncHttpExecutionMBean||||
+|JoinFilterFunctionCompiler||||
+|JoinCompiler||||
+|OrderingCompiler||||
+|PagesIndex.DefaultFactory||||
+|LookupJoinOperators||||
+|PagesResponseWriter||||
+|==exchange client==|
+|ExchangeClientFactory||||
+|http client "exchange"||||
+|DriftNettyClientModule||||
+|drift client ThriftTaskClient||||
+|ExchangeExecutionMBean||||
+|==execution==|
+|HttpLocationFactory||||
+|==memory manager==|
+|MemoryResource||||
+|==transaction manager==|
+|==data stream provider==|
+|PageSourceManager||||
+|==connector distributed metadata manager==|
+|ConnectorMetadataUpdaterManager||||
+|page sink provider|
+|PageSinkManager||||
+|==metadata==|
+|StaticCatalogStore||||
+|StaticFunctionNamespaceStore||||
+|FunctionAndTypeManager||||
+|MetadataManager||||
+|==row expression utils==|
+|RowExpressionDomainTranslator||||
+|RowExpressionPredicateCompiler||||
+|RowExpressionDeterminismEvaluator||||
+|==type==|
+|TypeManager||||
+|TypeDeserializer||||
+|Type||||
+|==plan==|
+|VariableReferenceExpressionSerializer||||
+|VariableReferenceExpressionDeserializer||||
+|==split manager==|
+|SplitManager||||
+|partitioning provider manager|
+|PartitioningProviderManager||||
+|node partitioning manager|
+|NodePartitioningManager||||
+|connector plan optimizer manager|
+|ConnectorPlanOptimizerManager||||
+|==index manager==|
+|IndexManager||||
+|handle resolver|
+|HandleJsonModule||||
+|ObjectMapperProvider||||
+|==connector==|
+|ScalarStatsCalculator||||
+|StatsNormalizer||||
+|FilterStatsCalculator||||
+|ConnectorManager||||
+|==system connector==|
+|SystemConnectorModule|module||
+|==splits==|
+|SliceSerializer||||
+|SliceDeserializer||||
+|ExpressionSerializer||||
+|ExpressionDeserializer||||
+|FunctionCallDeserializer||||
+|==metadata updates==|
+|==split monitor==|
+|SplitMonitor||||
+|==Determine the NodeVersion==|
+|NodeVersion||||
+|==presto announcement==|
+|discovry http announcement||||
+|==server info resource==|
+|ServerInfoResource||||
+|==node status resource==|
+|StatusResource||||
+|==plugin manager==|
+|PluginManager||||
+|CatalogManager||||
+|==block encodings==|
+|BlockEncodingManager||||
+|BlockEncoding||||
+|BlockJsonSerde.Serializer||||
+|BlockJsonSerde.Deserializer||||
+|==thread visualizer==|
+|ThreadResource||||
+|==PageSorter==|
+|PagesIndexPageSorter||||
+|==PageIndexer==|
+|GroupByHashPageIndexerFactory||||
+|==Finalizer==|
+|FinalizerService||||
+|==Spiller==|
+|GenericSpillerFactory||||
+|GenericPartitioningSpillerFactory||||
+|SpillerStats||||
+|LocalSpillManager||||
+|SingleStreamSpillerFactory||||
+|FileSingleStreamSpillerFactory||||
+|TempStorageSingleStreamSpillerFactory||||
+|==Thrift RPC==|
+|DriftNettyServerModule|module||
+|ThriftTaskService||||
+|ThriftServerInfoService||||
+|==Async page transport==|
+|AsyncPageTransportServlet||||
+|==cleanup==|
+|ExecutorCleanup||||
+|==Optional Status Detector==|
+|NodeStatusService||||
 
 #### `server.ResourceManagerModule`
+
+|Name|Type|Source|Description|
+|:---|:---|:---|:---|
+|==discovery server==|
+|EmbeddedDiscoveryModule||||
+|==presto coordinator announcement==|
+|discovery http announcement "presto-resource-manager"||||
+|==resource for serving static content==|
+|WebUiResource||||
+|==failure detector==|
+|FailureDetectorModule||||
+|NodeResource||||
+|WorkerResource||||
+|http client "workerInfo"||||
+||
+|NoOpQueryManager||||
+|ResourceGroupStateInfoResource||||
+|QueryIdGenerator||||
+|QueryPreparer||||
+|QuerySessionSupplier||||
+|NoOpResourceGroupManager||||
+|NoOpTransactionManager||||
+
 #### `server.CoordinatorModule`
+
+|Name|Type|Source|Description|
+|:---|:---|:---|:---|
+|http server "/ui"||||
+|http server "/tableau"||||
+|==discovery server==|
+|EmbeddedDiscoveryModule||||
+|==presto coordinator announcement==|
+|discovry http announcement "presto-coordinator"||||
+|==statement resource==|
+|QueuedStatementResource||||
+|ExecutingStatementResource||||
+|StatementHttpExecutionMBean||||
+|==resource for serving static content==|
+|WebUiResource||||
+|==failure detector==|
+|FailureDetectorModule|module||
+|NodeResource||||
+|WorkerResource||||
+|http client "workerInfo"||||
+|==query monitor==|
+|QueryMonitor||||
+|==query manager==|
+|QueryResource||||
+|StageResource||||
+|QueryStateInfoResource||||
+|ResourceGroupStateInfoResource||||
+|QueryIdGenerator||||
+|SqlQueryManager||||
+|QueryPreparer||||
+|QuerySessionSupplier||||
+|InternalResourceGroupManager||||
+|LegacyResourceGroupConfigurationManager||||
+|LocalQueryProvider||||
+|TaskInfoResource||||
+|==dispatcher==|
+|DispatchManager||||
+|FailedDispatchQueryFactory||||
+|DispatchExecutor||||
+|==local dispatcher==|
+|LocalDispatchQueryFactory||||
+|==cluster memory manager==|
+|ClusterMemoryManager||||
+|http client "memoryManager"||||
+|NoneLowMemoryKiller||||
+|TotalReservationLowMemoryKiller||||
+|TotalReservationOnBlockedNodesLowMemoryKiller||||
+|==node monitor==|
+|ClusterSizeMonitor||||
+|==statistics calculator==|
+|StatsCalculatorModule|module||
+|==cost calculator==|
+|TaskCountEstimator||||
+|CostCalculatorUsingExchanges||||
+|CostComparator||||
+|==cluster statistics==|
+|ClusterStatsResource||||
+|==planner==|
+|PlanFragmenter||||
+|PlanOptimizers||||
+|==query explainer==|
+|QueryExplainer||||
+|==explain analyze==|
+|ExplainAnalyzeContext||||
+|==execution scheduler==|
+|HttpRemoteTaskFactory||||
+|RemoteTaskStats||||
+|http client "scheduler"||||
+|ScheduledExecutorService "stage-scheduler"||||
+|==query execution==|
+|ExecutorService "query-execution-%s"||||
+|QueryExecutionMBean||||
+|SplitSchedulerStats||||
+|SqlQueryExecutionFactory||||
+|SectionExecutionFactory||||
+|util.StatementUtils#STATEMENT_QUERY_TYPES SqlQueryExecutionFactory||||
+|DataDefinitionExecutionFactory||||
+|CreateSchemaTask||||
+|DropSchemaTask||||
+|RenameSchemaTask||||
+|AddColumnTask||||
+|CreateTableTask||||
+|RenameTableTask||||
+|RenameColumnTask||||
+|DropColumnTask||||
+|DropTableTask||||
+|CreateViewTask||||
+|DropViewTask||||
+|CreateMaterializedViewTask||||
+|DropMaterializedViewTask||||
+|CreateFunctionTask||||
+|AlterFunctionTask||||
+|DropFunctionTask||||
+|UseTask||||
+|SetSessionTask||||
+|ResetSessionTask||||
+|StartTransactionTask||||
+|CommitTask||||
+|RollbackTask||||
+|CallTask||||
+|CreateRoleTask||||
+|DropRoleTask||||
+|GrantRolesTask||||
+|RevokeRolesTask||||
+|SetRoleTask||||
+|GrantTask||||
+|RevokeTask||||
+|PrepareTask||||
+|DeallocateTask||||
+|"all-at-once" AllAtOnceExecutionPolicy||||
+|"phased" PhasedExecutionPolicy||||
+|==cleanup==|
+|ExecutorCleanup||||
+
 #### `server.WorkerModule`
+
+|Name|Type|Source|Description|
+|:---|:---|:---|:---|
+|NoOpSessionSupplier|component||only coordinators create sessions.|
+|NoOpResourceGroupManager|component||only coordinators manage resource groups.|
+|NoOpTransactionManager|component||only coordinators manage transactions.|
+|NoOpFailureDetector|component||only coordinators need global node selection.|
+|QueryManager|component||抛出`UnsupportedOperationException`: this binding is needed by SystemConnectorModule, but will only be used on the coordinator|
 
 ## 使用
 
@@ -272,13 +563,13 @@ Exchanges transfer data between Presto nodes for different stages of a query. Ad
 |task.http-response-threads|integer|Minimum value: 1|100|
 |Maximum number of threads that may be created to handle HTTP responses. Threads are created on demand and are cleaned up when idle, thus there is no overhead to a large value if the number of requests to be handled is small. More threads may be helpful on clusters with a high number of concurrent queries, or on clusters with hundreds or thousands of workers.|
 |task.http-timeout-threads|integer|Minimum value: 1|3|
-|Number of threads used to handle timeouts when generating HTTP responses. This value should be increased if all the threads are frequently in use. This can be monitored via the com.facebook.presto.server:name=AsyncHttpExecutionMBean:TimeoutExecutor JMX object. If ActiveCount is always the same as PoolSize, increase the number of threads.|
+|Number of threads used to handle timeouts when generating HTTP responses. This value should be increased if all the threads are frequently in use. This can be monitored via the server:name=AsyncHttpExecutionMBean:TimeoutExecutor JMX object. If ActiveCount is always the same as PoolSize, increase the number of threads.|
 |task.info-update-interval|duration|Minimum value: 1ms<br/>Maximum value: 10s|3s|
 |Controls staleness of task information, which is used in scheduling. Larger values can reduce coordinator CPU load, but may result in suboptimal split scheduling.
 |task.max-partial-aggregation-memory|data size||16MB|
 |Maximum size of partial aggregation results for distributed aggregations. Increasing this value can result in less network transfer and lower CPU utilization by allowing more groups to be kept locally before being flushed, at the cost of additional memory usage.|
 |task.max-worker-threads|integer||Node CPUs * 2|
-|Sets the number of threads used by workers to process splits. Increasing this number can improve throughput if worker CPU utilization is low and all the threads are in use, but will cause increased heap space usage. Setting the value too high may cause a drop in performance due to a context switching. The number of active threads is available via the RunningSplits property of the com.facebook.presto.execution.executor:name=TaskExecutor.RunningSplits JXM object.|
+|Sets the number of threads used by workers to process splits. Increasing this number can improve throughput if worker CPU utilization is low and all the threads are in use, but will cause increased heap space usage. Setting the value too high may cause a drop in performance due to a context switching. The number of active threads is available via the RunningSplits property of the execution.executor:name=TaskExecutor.RunningSplits JXM object.|
 |task.min-drivers|integer||task.max-worker-threads * 2|
 |The target number of running leaf splits on a worker. This is a minimum value because each leaf task is guaranteed at least 3 running splits. Non-leaf tasks are also guaranteed to run in order to prevent deadlocks. A lower value may improve responsiveness for new tasks, but can result in underutilized resources. A higher value can increase resource utilization, but uses additional memory.|
 |task.writer-count|integer|Restrictions: must be a power of two|1|
@@ -341,27 +632,27 @@ The following properties allow tuning the Regular Expression Functions.
 CLI例:
 
 ```
-com.facebook.presto.cli.Presto
+cli.Presto
 ```
 
 ### SQL解析
 
 |Abstraction|Description|
 |:---|:---|
-|`com.facebook.presto.server.protocol.Query`|查询动作<br/>创建: com.facebook.presto.server.protocol.LocalQueryProvider#getQuery|
-|`com.facebook.presto.sql.tree.Query`|SQL查询: `extends com.facebook.presto.sql.tree.Statement`|
-|`com.facebook.presto.sql.tree.Node`|AST节点|
-|`com.facebook.presto.sql.parser.SqlParser`|SQL解析器: 使用ANTLR|
+|`server.protocol.Query`|查询动作<br/>创建: server.protocol.LocalQueryProvider#getQuery|
+|`sql.tree.Query`|SQL查询: `extends sql.tree.Statement`|
+|`sql.tree.Node`|AST节点|
+|`sql.parser.SqlParser`|SQL解析器: 使用ANTLR|
 |`presto-parser\src\main\antlr4\com\facebook\presto\sql\parser\SqlBase.g4`|SQL ANTLR语法.|
 
 ```
-com.facebook.presto.sql.parser.SqlParser#invokeParser
+sql.parser.SqlParser#invokeParser
 ```
 
 Upstream:
 
 ```
-com.facebook.presto.dispatcher.DispatchManager
+dispatcher.DispatchManager
 ```
 
 Downstream:
