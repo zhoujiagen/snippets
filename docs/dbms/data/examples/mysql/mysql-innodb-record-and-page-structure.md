@@ -268,7 +268,7 @@ ORIGIN of the record
 +----------------------------+
 | Fil Header                 |  File Page Header: 38 bytes
 +----------------------------+
-| Page Header                |
+| Page Header                |  56 bytes
 +----------------------------+
 | Infimum + Supremum Records |
 +----------------------------+
@@ -278,7 +278,7 @@ ORIGIN of the record
 +----------------------------+
 | Page Directory             |
 +----------------------------+
-| Fil Trailer                |
+| Fil Trailer                |  8 bytes
 +----------------------------+
 
 ```
@@ -591,7 +591,109 @@ constexpr ulint FIL_PAGE_END_LSN_OLD_CHKSUM = 8;
 
 ### Example
 
+> ibd File Overview: https://github.com/jeremycole/innodb_diagrams/blob/master/images/InnoDB_Structures/IBD%20File%20Overview.png
 
+```
+00c000  d3 58 5e b3 00 00 00 03 ff ff ff ff ff ff ff ff  .X^.............
+00c010  00 00 00 01 1f 2c 65 9e 45 bf 00 00 00 00 00 00  .....,e.E.......
+00c020  00 00 00 00 00 58 00 02 00 d4 80 05 00 00 00 00  .....X..........
+00c030  00 c0 00 02 00 02 00 03 00 00 00 00 00 00 00 00  ................
+00c040  00 00 00 00 00 00 00 00 00 72 00 00 00 58 00 00  .........r...X..
+00c050  00 02 00 f2 00 00 00 58 00 00 00 02 00 32 01 00  .......X.....2..
+00c060  02 00 1e 69 6e 66 69 6d 75 6d 00 04 00 0b 00 00  ...infimum......
+00c070  73 75 70 72 65 6d 75 6d 02 02 02 00 00 00 10 00  supremum........
+00c080  22 00 00 00 00 03 00 00 00 00 00 37 14 b1 00 00  "..........7....
+00c090  04 71 01 10 50 50 50 50 50 50 01 01 01 00 00 00  .q..PPPPPP......
+00c0a0  18 00 1d 00 00 00 00 03 01 00 00 00 00 37 15 b2  .............7..
+00c0b0  00 00 04 74 01 10 51 51 51 01 06 00 00 20 ff b0  ...t..QQQ.... ..
+00c0c0  00 00 00 00 03 02 00 00 00 00 37 18 b4 00 00 04  ..........7.....
+00c0d0  72 01 10 52 00 00 00 00 00 00 00 00 00 00 00 00  r..R............
+00c0e0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+		00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+		......
+00fff0  00 00 00 00 00 70 00 63 d3 58 5e b3 1f 2c 65 9e  .....p.c.X^..,e.
+```
+
+- Fil Header
+
+```
+C000
+D3 58 5E B3 00 00 00 03 FF FF FF FF FF FF FF FF
+00 00 00 01 1F 2C 65 9E 45 BF 00 00 00 00 00 00
+00 00 00 00 00 58
+```
+
+- Page Header
+
+```
+C026
+00 02 00 D4 80 05 00 00 00 00 00 C0 00 02 00 02
+00 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 72 00 00 00 58 00 00 00 02 00 F2 00 00
+00 58 00 00 00 02 00 32
+```
+
+|Value|Name|Size(byte)|Description|
+|:---|:---|:---|:---|
+|00 02|PAGE_N_DIR_SLOTS|2|number of directory slots in the page directory part|
+|00 D4|PAGE_HEAP_TOP|2|record pointer to first record in heap|
+|80 05|PAGE_N_HEAP|2|number of heap records ???|
+|00 00|PAGE_FREE|2|record pointer to first free record|
+|00 00|PAGE_GARBAGE|2|number of bytes in deleted records|
+|00 C0|PAGE_LAST_INSERT|2|record pointer to the last insert record|
+|00 02|PAGE_DIRECTION|2|page direction of insert|
+|00 02|PAGE_N_DIRECTION|2|number of consecutive inserts in the same direction|
+|00 03|PAGE_N_RECS|2|number of user records|
+|00 00 00 00 00 00 00 00|PAGE_MAX_TRX_ID|8|the highest trx ID which might have changed a record on the page<br/>only set for secondary indexes|
+|00 00|PAGE_LEVEL|2|level within the index: 0 for a leaf page|
+|00 00 00 00 00 00 00 72|PAGE_INDEX_ID|8|ID of the index the page belongs to|
+|00 00 00 58 00 00 00 02 00 F2|PAGE_BTR_SEG_LEAF|FSEG_HEADER_SIZE=10|file segment header for the leaf pages in a B-tree|
+|00 00 00 58 00 00 00 02 00 32|PAGE_BTR_SEG_TOP|FSEG_HEADER_SIZE=10|file segment header for the non-leaf pages in a B-tree|
+
+- Infimum and Supremum Records
+
+```
+C05E
+01 00 02 00 1E
+C063
+69 6E 66 69 6D 75 6D
+00 04 00 0B 00 00
+C070
+73 75 70 72 65 6D 75 6D
+```
+
+- User Records
+
+```
+C078
+02 02 02 00 00 00 10 00 22 00 00 00 00 03 00 00
+00 00 00 37 14 B1 00 00 04 71 01 10 50 50 50 50
+50 50 01 01 01 00 00 00 18 00 1D 00 00 00 00 03
+01 00 00 00 00 37 15 B2 00 00 04 74 01 10 51 51
+51 01 06 00 00 20 FF B0 00 00 00 00 03 02 00 00
+00 00 37 18 B4 00 00 04 72 01 10 52
+```
+
+- Free Space
+
+```
+C0D4
+00 ...
+```
+
+- Page Directory
+
+```
+FFF4
+00 70 00 63  - infimum, supremum
+```
+
+- Fil Trailer
+
+```
+FFF8
+D3 58 5E B3 1F 2C 65 9E
+```
 
 ### Source Codes
 
