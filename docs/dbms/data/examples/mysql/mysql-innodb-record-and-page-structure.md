@@ -3,6 +3,7 @@
 |时间|内容|
 |:---|:---|
 |20210510|kick off: add Record structure.|
+|20210511|add Page structure.|
 
 ## Record
 
@@ -171,7 +172,7 @@ info                          : 0
 
 - rem0rec.ic, rem0rec.h, rem0rec.c
 
-``` c++
+```
 // innobase/include/rem0rec.ic
 
 /* Offsets of the bit-fields in an old-style record. NOTE! In the table the
@@ -220,7 +221,7 @@ most significant bytes and bits are written below less significant.
 */
 ```
 
-``` c++
+```
 // innobase/rem/rem0rec.cc
 
 /*			PHYSICAL RECORD (NEW STYLE)
@@ -259,3 +260,339 @@ ORIGIN of the record
 ## Page
 
 - references: https://dev.mysql.com/doc/internals/en/innodb-page-structure.html
+
+
+页由7个部分构成:
+
+```
++----------------------------+
+| Fil Header                 |  File Page Header: 38 bytes
++----------------------------+
+| Page Header                |
++----------------------------+
+| Infimum + Supremum Records |
++----------------------------+
+| User Records               |
++----------------------------+
+| Free Space                 |
++----------------------------+
+| Page Directory             |
++----------------------------+
+| Fil Trailer                |
++----------------------------+
+
+```
+
+页总是以两个不变记录Infimum和Supremum记录开始.
+
+
+页大小:
+
+```
+// innobase/include/univ.i
+
+/* Define the Min, Max, Default page sizes. */
+/** Minimum Page Size Shift (power of 2) */
+#define UNIV_PAGE_SIZE_SHIFT_MIN 12
+/** Maximum Page Size Shift (power of 2) */
+#define UNIV_PAGE_SIZE_SHIFT_MAX 16
+/** Default Page Size Shift (power of 2) */
+#define UNIV_PAGE_SIZE_SHIFT_DEF 14
+
+
+/** Minimum page size InnoDB currently supports. */
+#define UNIV_PAGE_SIZE_MIN (1 << UNIV_PAGE_SIZE_SHIFT_MIN)
+/** Maximum page size InnoDB currently supports. */
+constexpr size_t UNIV_PAGE_SIZE_MAX = (1 << UNIV_PAGE_SIZE_SHIFT_MAX);
+/** Default page size for InnoDB tablespaces. */
+#define UNIV_PAGE_SIZE_DEF (1 << UNIV_PAGE_SIZE_SHIFT_DEF)
+```
+
+### Fil Header
+
+```
+// innobase/include/fil0fil.h
+
+/** The byte offsets on a file page for various variables @{ */
+#define FIL_PAGE_SPACE_OR_CHKSUM 0	/*!< in < MySQL-4.0.14 space id the
+					page belongs to (== 0) but in later
+					versions the 'new' checksum of the
+					page */
+#define FIL_PAGE_OFFSET		4	/*!< page offset inside space */
+#define FIL_PAGE_PREV		8	/*!< if there is a 'natural'
+					predecessor of the page, its
+					offset.  Otherwise FIL_NULL.
+					This field is not set on BLOB
+					pages, which are stored as a
+					singly-linked list.  See also
+					FIL_PAGE_NEXT. */
+#define FIL_PAGE_NEXT		12	/*!< if there is a 'natural' successor
+					of the page, its offset.
+					Otherwise FIL_NULL.
+					B-tree index pages
+					(FIL_PAGE_TYPE contains FIL_PAGE_INDEX)
+					on the same PAGE_LEVEL are maintained
+					as a doubly linked list via
+					FIL_PAGE_PREV and FIL_PAGE_NEXT
+					in the collation order of the
+					smallest user record on each page. */
+#define FIL_PAGE_LSN		16	/*!< lsn of the end of the newest
+					modification log record to the page */
+#define	FIL_PAGE_TYPE		24	/*!< file page type: FIL_PAGE_INDEX,...,
+					2 bytes.
+					The contents of this field can only
+					be trusted in the following case:
+					if the page is an uncompressed
+					B-tree index page, then it is
+					guaranteed that the value is
+					FIL_PAGE_INDEX.
+					The opposite does not hold.
+					In tablespaces created by
+					MySQL/InnoDB 5.1.7 or later, the
+					contents of this field is valid
+					for all uncompressed pages. */
+#define FIL_PAGE_FILE_FLUSH_LSN	26	/*!< this is only defined for the
+					first page of the system tablespace:
+					the file has been flushed to disk
+					at least up to this LSN. For
+					FIL_PAGE_COMPRESSED pages, we store
+					the compressed page control information
+					in these 8 bytes. */
+
+/** If page type is FIL_PAGE_COMPRESSED then the 8 bytes starting at
+FIL_PAGE_FILE_FLUSH_LSN are broken down as follows: */
+
+/** Control information version format (u8) */
+static const ulint FIL_PAGE_VERSION = FIL_PAGE_FILE_FLUSH_LSN;
+
+/** Compression algorithm (u8) */
+static const ulint FIL_PAGE_ALGORITHM_V1 = FIL_PAGE_VERSION + 1;
+
+/** Original page type (u16) */
+static const ulint FIL_PAGE_ORIGINAL_TYPE_V1 = FIL_PAGE_ALGORITHM_V1 + 1;
+
+/** Original data size in bytes (u16)*/
+static const ulint FIL_PAGE_ORIGINAL_SIZE_V1 = FIL_PAGE_ORIGINAL_TYPE_V1 + 2;
+
+/** Size after compression (u16) */
+static const ulint FIL_PAGE_COMPRESS_SIZE_V1 = FIL_PAGE_ORIGINAL_SIZE_V1 + 2;
+
+/** This overloads FIL_PAGE_FILE_FLUSH_LSN for RTREE Split Sequence Number */
+#define	FIL_RTREE_SPLIT_SEQ_NUM	FIL_PAGE_FILE_FLUSH_LSN
+
+/** starting from 4.1.x this contains the space id of the page */
+#define FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID  34
+
+#define FIL_PAGE_SPACE_ID  FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID
+
+#define FIL_PAGE_DATA		38U	/*!< start of the data on the page */
+
+/* @} */
+```
+
+|Name|Size(byte)|Description|
+|:---|:---|:---|
+|FIL_PAGE_SPACE_OR_CHKSUM|4|(log or tablespace) space id the page is in|
+|FIL_PAGE_OFFSET|4|page number from the start of space|
+|FIL_PAGE_PREV|4|offset of previous page in key order|
+|FIL_PAGE_NEXT|4|offset of next page in key order|
+|FIL_PAGE_LSN|8|log serial number of page's latest log record|
+|FIL_PAGE_TYPE|2|page type|
+|FIL_PAGE_FILE_FLUSH_LSN|8|the file has been flushed to disk at least up to this lsn<br/>valid only on the first page of the file|
+|FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID|4|the latest archived log file number at the time FIL_PAGE_FILE_FLUSH_LSN was written in the log<br/>valid only on the first page of the file|
+
+FIL_PAGE_TYPE的取值:
+
+```
+// innobase/include/fil0fil.h
+
+/** File page types (values of FIL_PAGE_TYPE) @{ */
+#define FIL_PAGE_INDEX		17855	/*!< B-tree node */
+#define FIL_PAGE_RTREE		17854	/*!< B-tree node */
+#define FIL_PAGE_UNDO_LOG	2	/*!< Undo log page */
+#define FIL_PAGE_INODE		3	/*!< Index node */
+#define FIL_PAGE_IBUF_FREE_LIST	4	/*!< Insert buffer free list */
+/* File page types introduced in MySQL/InnoDB 5.1.7 */
+#define FIL_PAGE_TYPE_ALLOCATED	0	/*!< Freshly allocated page */
+#define FIL_PAGE_IBUF_BITMAP	5	/*!< Insert buffer bitmap */
+#define FIL_PAGE_TYPE_SYS	6	/*!< System page */
+#define FIL_PAGE_TYPE_TRX_SYS	7	/*!< Transaction system data */
+#define FIL_PAGE_TYPE_FSP_HDR	8	/*!< File space header */
+#define FIL_PAGE_TYPE_XDES	9	/*!< Extent descriptor page */
+#define FIL_PAGE_TYPE_BLOB	10	/*!< Uncompressed BLOB page */
+#define FIL_PAGE_TYPE_ZBLOB	11	/*!< First compressed BLOB page */
+#define FIL_PAGE_TYPE_ZBLOB2	12	/*!< Subsequent compressed BLOB page */
+#define FIL_PAGE_TYPE_UNKNOWN	13	/*!< In old tablespaces, garbage
+					in FIL_PAGE_TYPE is replaced with this
+					value when flushing pages. */
+#define FIL_PAGE_COMPRESSED	14	/*!< Compressed page */
+#define FIL_PAGE_ENCRYPTED	15	/*!< Encrypted page */
+#define FIL_PAGE_COMPRESSED_AND_ENCRYPTED 16
+					/*!< Compressed and Encrypted page */
+#define FIL_PAGE_ENCRYPTED_RTREE 17	/*!< Encrypted R-tree page */
+
+/** Used by i_s.cc to index into the text description. */
+#define FIL_PAGE_TYPE_LAST	FIL_PAGE_TYPE_UNKNOWN
+					/*!< Last page type */
+/* @} */
+```
+
+### Page Header
+
+```
+// innobase/include/page0types.h
+
+/*			PAGE HEADER
+                        ===========
+Index page header starts at the first offset left free by the FIL-module */
+
+typedef byte page_header_t;
+
+#define PAGE_HEADER                                  \
+  FSEG_PAGE_DATA /* index page header starts at this \
+         offset */
+/*-----------------------------*/
+#define PAGE_N_DIR_SLOTS 0 /* number of slots in page directory */
+#define PAGE_HEAP_TOP 2    /* pointer to record heap top */
+#define PAGE_N_HEAP                                      \
+  4                    /* number of records in the heap, \
+                       bit 15=flag: new-style compact page format */
+#define PAGE_FREE 6    /* pointer to start of page free record list */
+#define PAGE_GARBAGE 8 /* number of bytes in deleted records */
+#define PAGE_LAST_INSERT                                                \
+  10                      /* pointer to the last inserted record, or    \
+                          NULL if this info has been reset by a delete, \
+                          for example */
+#define PAGE_DIRECTION 12 /* last insert direction: PAGE_LEFT, ... */
+#define PAGE_N_DIRECTION                                            \
+  14                   /* number of consecutive inserts to the same \
+                       direction */
+#define PAGE_N_RECS 16 /* number of user records on the page */
+#define PAGE_MAX_TRX_ID                             \
+  18 /* highest id of a trx which may have modified \
+     a record on the page; trx_id_t; defined only   \
+     in secondary indexes and in the insert buffer  \
+     tree */
+#define PAGE_HEADER_PRIV_END                      \
+  26 /* end of private data structure of the page \
+     header which are set in a page create */
+/*----*/
+#define PAGE_LEVEL                                 \
+  26 /* level of the node in an index tree; the    \
+     leaf level is the level 0.  This field should \
+     not be written to after page creation. */
+#define PAGE_INDEX_ID                          \
+  28 /* index id where the page belongs.       \
+     This field should not be written to after \
+     page creation. */
+
+#define PAGE_BTR_SEG_LEAF                         \
+  36 /* file segment header for the leaf pages in \
+     a B-tree: defined only on the root page of a \
+     B-tree, but not in the root of an ibuf tree */
+#define PAGE_BTR_IBUF_FREE_LIST PAGE_BTR_SEG_LEAF
+#define PAGE_BTR_IBUF_FREE_LIST_NODE PAGE_BTR_SEG_LEAF
+/* in the place of PAGE_BTR_SEG_LEAF and _TOP
+there is a free list base node if the page is
+the root page of an ibuf tree, and at the same
+place is the free list node if the page is in
+a free list */
+#define PAGE_BTR_SEG_TOP (36 + FSEG_HEADER_SIZE)
+/* file segment header for the non-leaf pages
+in a B-tree: defined only on the root page of
+a B-tree, but not in the root of an ibuf
+tree */
+/*----*/
+#define PAGE_DATA (PAGE_HEADER + 36 + 2 * FSEG_HEADER_SIZE)
+/* start of data on the page */
+
+
+
+/* Directions of cursor movement */
+#define PAGE_LEFT 1
+#define PAGE_RIGHT 2
+#define PAGE_SAME_REC 3
+#define PAGE_SAME_PAGE 4
+#define PAGE_NO_DIRECTION 5
+```
+
+|Name|Size(byte)|Description|
+|:---|:---|:---|
+|PAGE_N_DIR_SLOTS|2|number of directory slots in the page directory part|
+|PAGE_HEAP_TOP|2|record pointer to first record in heap|
+|PAGE_N_HEAP|2|number of heap records|
+|PAGE_FREE|2|record pointer to first free record|
+|PAGE_GARBAGE|2|number of bytes in deleted records|
+|PAGE_LAST_INSERT|2|record pointer to the last insert record|
+|PAGE_DIRECTION|2|page direction of insert|
+|PAGE_N_DIRECTION|2|number of consecutive inserts in the same direction|
+|PAGE_N_RECS|2|number of user records|
+|PAGE_MAX_TRX_ID|8|the highest trx ID which might have changed a record on the page<br/>only set for secondary indexes|
+|PAGE_LEVEL|2|level within the index: 0 for a leaf page|
+|PAGE_INDEX_ID|8|ID of the index the page belongs to|
+|PAGE_BTR_SEG_LEAF|FSEG_HEADER_SIZE=10|file segment header for the leaf pages in a B-tree|
+|PAGE_BTR_SEG_TOP|FSEG_HEADER_SIZE=10|file segment header for the non-leaf pages in a B-tree|
+
+```
+// innobase/include/fsp0types.h
+
+
+/** On a page of any file segment, data may be put starting from this
+offset */
+#define FSEG_PAGE_DATA FIL_PAGE_DATA
+
+/** @name File segment header
+The file segment header points to the inode describing the file segment. */
+/** @{ */
+/** Data type for file segment header */
+typedef byte fseg_header_t;
+
+#define FSEG_HDR_SPACE 0   /*!< space id of the inode */
+#define FSEG_HDR_PAGE_NO 4 /*!< page number of the inode */
+#define FSEG_HDR_OFFSET 8  /*!< byte offset of the inode */
+
+#define FSEG_HEADER_SIZE            \
+  10 /*!< Length of the file system \
+     header, in bytes */
+/** @} *
+```
+
+### Infimum and Supremum Records
+
+索引在刚创建时会在根页中设置infimum记录和supremum记录; 随着索引增长, infimum记录会在最小叶子页中, supremum记录会是最大键页中的最后一个记录.
+
+### User Records
+
+两种导航用户记录的方式:
+
+- 无序列表(堆heap): 在已有行之后(Free Space part的顶部)或已删除行的位置插入新行;
+- 有序列表: 按键顺序, 将每个记录中EXTRA BYTES中next域指向下一个记录.
+
+### Free Space
+
+页中的空闲空间.
+
+### Page Directory
+
+变长数量的记录指针, 记录指针又称为slot或directory slot. 在满页中, InnoDB每6个记录生成一个slot, 即使用稀疏的目录(sparse directory).
+
+slot跟踪记录的逻辑顺序, 即按键顺序排列, 且每个slot大小固定, 便于使用二分查找.
+
+### Fil Trailer
+
+```
+// innobase/include/fil0types.h
+
+/** File page trailer */
+/** the low 4 bytes of this are used to store the page checksum, the
+last 4 bytes should be identical to the last 4 bytes of FIL_PAGE_LSN */
+constexpr ulint FIL_PAGE_END_LSN_OLD_CHKSUM = 8;
+```
+
+### Example
+
+
+
+### Source Codes
+
+- page0page.ic, page0page.h, page0page.c
