@@ -25,6 +25,7 @@ nav:
         - 'Home': dbms/data/index.md
         - 'Examples':
           - 'MySQL':
+            - 'Data Type': dbms/data/examples/mysql/mysql-data-type.md 
             - '.frm': dbms/data/examples/mysql/mysql-frm-file-format.md
             - 'InnoDB Record and Page Structure': dbms/data/examples/mysql/mysql-innodb-record-and-page-structure.md
             - 'Client/Server Protocol': dbms/data/examples/mysql/mysql-client-server-protocol.md
