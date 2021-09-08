@@ -16,7 +16,7 @@
 		<spring.boot.version>2.2.6.RELEASE</spring.boot.version>
 		<slf4j.version>1.7.7</slf4j.version>
 		<log4j.version>1.2.17</log4j.version>
-		<dubbo.version>2.7.5</dubbo.version>
+		<dubbo.version>2.7.13</dubbo.version>
 		<curator.version>4.2.0</curator.version>
 		<zookeeper.version>3.4.14</zookeeper.version>
 		<zkclient.version>0.10</zkclient.version>
